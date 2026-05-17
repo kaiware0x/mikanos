@@ -16,3 +16,18 @@
     - `MdePkg`: 基本ライブラリ
     - `AppPkg`: 様々な UEFI アプリケーションのサンプル集
     - `OvmfPkg`: UEFI BIOS のオープンソース実装である OVMF が収められている
+- `MikanLoaderPkg`
+  - メインメモリに OS を読み込むためのブートローダー
+  - `Loader.inf`
+    - コンポーネント定義ファイル
+    - ブートローダーの設定を記載する
+  - `.dec`
+    - パッケージ宣言ファイル
+  - `.dsc`
+    - パッケージ記述ファイル
+
+## QEMU で EFI アプリケーションを実行するコマンド
+
+```sh
+$HOME/osbook/devenv/run_qemu.sh $HOME/edk2/Build/MikanLoaderX64/DEBUG_CLANG38/X64/Loader.efi
+```
