@@ -26,8 +26,20 @@
   - `.dsc`
     - パッケージ記述ファイル
 
-## QEMU で EFI アプリケーションを実行するコマンド
+**QEMU で EFI アプリケーションを実行するコマンド**
 
 ```sh
 $HOME/osbook/devenv/run_qemu.sh $HOME/edk2/Build/MikanLoaderX64/DEBUG_CLANG38/X64/Loader.efi
+```
+
+**disk.img の中身の確認**
+
+EFIアプリケーションを実行したカレントディレクトリに `disk.img` というファイルができる。
+これは USB メモリの中身を1つに固めたファイルで、マウントして中身を見れる。
+
+```sh
+mkdir -p mnt
+sudo mount -o loop disk.img mnt
+ls mnt
+sudo umount mnt
 ```
