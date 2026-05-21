@@ -43,3 +43,16 @@ sudo mount -o loop disk.img mnt
 ls mnt
 sudo umount mnt
 ```
+
+> ブートローダはUEFI アプリとして、カーネルはELF バイナリとして別々のファイルとして開発し、ブートローダからカーネルを呼び出す形式にしようと思います。
+
+カーネルのビルド
+
+```sh
+cd ~/workspace/mikanos/kernel
+
+# freestanding: OS が無い環境で動くプログラム向け
+clang++ -O2 -Wall -g --target=x86_64-elf -ffreestanding -mno-red-zone -fno-exceptions -fno-rtti -std=c++17 -c main.cpp
+
+ld.lld --entry KernelMain -z norelro --image-base 0x100000 --static -o kernel.elf main.o
+```

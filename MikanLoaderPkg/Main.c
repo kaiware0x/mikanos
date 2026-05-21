@@ -160,7 +160,18 @@ EFI_STATUS EFIAPI UefiMain(
     // Memory map file の Close
     memmap_file->Close(memmap_file);
 
-    Print(L"Hello, Mikan World!\n");
+    //-----------------------------------
+    // kernel を読み込んで起動する
+    //-----------------------------------
+
+    EFI_FILE_PROTOCOL *kernel_file;
+    root_dir->Open(
+        root_dir, &kernel_file, L"\\kernel.elf", EFI_FILE_MODE_READ, 0);
+
+    UINTN file_info_size = sizeof(EFI_FILE_INFO) + sizeof(CHAR16) * 12;
+    UINT8 file_info_buffer[file_info_size];
+
+    Print(L"All done!\n");
     while (1)
         ;
     return EFI_SUCCESS;
