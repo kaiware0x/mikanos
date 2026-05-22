@@ -68,7 +68,7 @@ clang++ -O2 -Wall -g --target=x86_64-elf -ffreestanding -mno-red-zone -fno-excep
 ld.lld --entry KernelMain -z norelro --image-base 0x100000 --static -o kernel.elf main.o
 ```
 
-## 3.1 レッドゾーン
+## コラム 3.1 レッドゾーン
 
 > レッドゾーン（red zone）はスタックポインタを少し超えたスタック領域のことです。
 > System V AMD64 ABI（参考文献［6］）ではRSPの手前128バイトの領域がレッドゾーンと規定されています。
@@ -76,3 +76,6 @@ ld.lld --entry KernelMain -z norelro --image-base 0x100000 --static -o kernel.el
 
 他の関数を呼び出さない関数（leaf function）はRSP の値を調整することなくレッ
 ドゾーンを使って良い
+
+## 3.4
+

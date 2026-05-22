@@ -137,6 +137,31 @@ EFI_STATUS SaveMemoryMap(struct MemoryMap *map, EFI_FILE_PROTOCOL *file)
     return EFI_SUCCESS;
 }
 
+/**
+ * @brief Graphics Output Protocol
+ */
+EFI_STATUS OpenGOP(EFI_HANDLE image_handle,
+                   EFI_GRAPHICS_OUTPUT_PROTOCOL **gop)
+{
+    UINTN num_gop_handles = 0;
+    EFI_HANDLE *gop_handles = NULL;
+    gBS->LocatedHandleBuffer(
+        ByProtocol,
+        &gEfiGraphicsOutputProtocolGuid,
+        NULL,
+        &num_gop_handles,
+        &gop_handles);
+    gBS->OpenProtocol(
+        gop_handles[0],
+        &gEfiGraphicsOutputProtocolGuid,
+        (VOID **)gop,
+        image_handle,
+        NULL,
+        EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
+    FreePool(gop_handles);
+    return EFI_SUCCESS;
+}
+
 EFI_STATUS EFIAPI UefiMain(
     EFI_HANDLE image_handle,
     EFI_SYSTEM_TABLE *system_table)
