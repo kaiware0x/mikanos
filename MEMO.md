@@ -26,7 +26,7 @@
   - `.dsc`
     - パッケージ記述ファイル
 
-BootLoader のビルド
+## BootLoader のビルド
 
 ```sh
 cd ~/edk2
@@ -34,13 +34,16 @@ source edksetup.sh
 build
 ```
 
-**QEMU で EFI アプリケーションを実行するコマンド**
+## QEMU で EFI アプリケーションを実行
 
 ```sh
 $HOME/osbook/devenv/run_qemu.sh $HOME/edk2/Build/MikanLoaderX64/DEBUG_CLANG38/X64/Loader.efi
+
+# kernel プログラムを渡す場合
+$HOME/osbook/devenv/run_qemu.sh $HOME/edk2/Build/MikanLoaderX64/DEBUG_CLANG38/X64/Loader.efi $HOME/workspace/mikanos/kernel/kernel.elf
 ```
 
-**disk.img の中身の確認**
+## disk.img の中身の確認
 
 EFIアプリケーションを実行したカレントディレクトリに `disk.img` というファイルができる。
 これは USB メモリの中身を1つに固めたファイルで、マウントして中身を見れる。
@@ -54,7 +57,7 @@ sudo umount mnt
 
 > ブートローダはUEFI アプリとして、カーネルはELF バイナリとして別々のファイルとして開発し、ブートローダからカーネルを呼び出す形式にしようと思います。
 
-カーネルのビルド
+## カーネルのビルド
 
 ```sh
 cd ~/workspace/mikanos/kernel
@@ -64,3 +67,12 @@ clang++ -O2 -Wall -g --target=x86_64-elf -ffreestanding -mno-red-zone -fno-excep
 
 ld.lld --entry KernelMain -z norelro --image-base 0x100000 --static -o kernel.elf main.o
 ```
+
+## 3.1 レッドゾーン
+
+> レッドゾーン（red zone）はスタックポインタを少し超えたスタック領域のことです。
+> System V AMD64 ABI（参考文献［6］）ではRSPの手前128バイトの領域がレッドゾーンと規定されています。
+> この領域は実行中の関数により予約されていて、割り込みハンドラが勝手に変更してはならない、と決められています
+
+他の関数を呼び出さない関数（leaf function）はRSP の値を調整することなくレッ
+ドゾーンを使って良い
