@@ -1,3 +1,4 @@
+#include <Guid/FileInfo.h>
 #include <Library/PrintLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
@@ -161,17 +162,68 @@ EFI_STATUS EFIAPI UefiMain(
     memmap_file->Close(memmap_file);
 
     //-----------------------------------
-    // kernel を読み込んで起動する
+    // kernel を読み込む
     //-----------------------------------
 
+    // kernel_file の取得
     EFI_FILE_PROTOCOL *kernel_file;
     root_dir->Open(
         root_dir, &kernel_file, L"\\kernel.elf", EFI_FILE_MODE_READ, 0);
 
+    // kernel_file の Info の取得
+    // EFI_FILE_INFO::FileName 分のサイズを 12 文字分追加
     UINTN file_info_size = sizeof(EFI_FILE_INFO) + sizeof(CHAR16) * 12;
     UINT8 file_info_buffer[file_info_size];
+    kernel_file->GetInfo(
+        kernel_file, &gEfiFileInfoGuid, &file_info_size, file_info_buffer);
 
-    Print(L"All done!\n");
+    // kernel_file_size の取得
+    EFI_FILE_INFO *file_info = (EFI_FILE_INFO *)file_info_buffer;
+    UINTN kernel_file_size = file_info->FileSize;
+
+    // kernel_file 分のメモリを確保
+    EFI_PHYSICAL_ADDRESS kernel_base_addr = 0x100000;
+    gBS->AllocatePages(
+        AllocateAddress, EfiLoaderData,
+        /*pages=*/(kernel_file_size + 0xfff) / 0x1000,
+        &kernel_base_addr);
+
+    // kernel_file を読み込み
+    kernel_file->Read(kernel_file, &kernel_file_size, (VOID *)kernel_base_addr);
+    Print(L"Kernel: 0x%0lx (%lu bytes)\n", kernel_base_addr, kernel_file_size);
+
+    //-----------------------------------
+    // Boot Service を停止させる
+    //-----------------------------------
+    EFI_STATUS status;
+    status = gBS->ExitBootServices(image_handle, memmap.map_key);
+    if (EFI_ERROR(status))
+    {
+        status = GetMemoryMap(&memmap);
+        if (EFI_ERROR(status))
+        {
+            Print(L"Failed to get memory map: %r\n", status);
+            while (1)
+                ;
+        }
+
+        status = gBS->ExitBootServices(image_handle, memmap.map_key);
+        if (EFI_ERROR(status))
+        {
+            Print(L"Could not exit boot service: %r\n", status);
+            while (1)
+                ;
+        }
+    }
+
+    //-----------------------------------
+    // Kernel を起動する
+    //-----------------------------------
+    UINT64 entry_addr = *(UINT64 *)(kernel_base_addr + 24);
+    typedef void EntryPointType(void);
+    EntryPointType *entry_point = (EntryPointType *)entry_addr;
+    entry_point();
+
     while (1)
         ;
     return EFI_SUCCESS;

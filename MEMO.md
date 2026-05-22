@@ -26,6 +26,14 @@
   - `.dsc`
     - パッケージ記述ファイル
 
+BootLoader のビルド
+
+```sh
+cd ~/edk2
+source edksetup.sh
+build
+```
+
 **QEMU で EFI アプリケーションを実行するコマンド**
 
 ```sh
