@@ -230,12 +230,6 @@ EFI_STATUS EFIAPI UefiMain(
           gop->Mode->FrameBufferBase,
           gop->Mode->FrameBufferBase + gop->Mode->FrameBufferSize,
           gop->Mode->FrameBufferSize);
-    // 画面塗りつぶし
-    UINT8 *frame_buffer = (UINT8 *)gop->Mode->FrameBufferBase;
-    for (UINTN i = 0; i < gop->Mode->FrameBufferSize; ++i)
-    {
-        frame_buffer[i] = 255; // 白
-    }
 
     //----------------------------------------------------
     // kernel を読み込む
@@ -298,9 +292,9 @@ EFI_STATUS EFIAPI UefiMain(
     //----------------------------------------------------
 
     UINT64 entry_addr = *(UINT64 *)(kernel_base_addr + 24);
-    typedef void EntryPointType(void);
+    typedef void EntryPointType(UINT64, UINT64);
     EntryPointType *entry_point = (EntryPointType *)entry_addr;
-    entry_point();
+    entry_point(gop->Mode->FrameBufferBase, gop->Mode->FrameBufferSize);
 
     while (1)
         ;

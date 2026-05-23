@@ -72,12 +72,16 @@ sudo umount mnt
 ## カーネルのビルド
 
 ```sh
+source $HOME/osbook/devenv/buildenv.sh
+
 cd ~/workspace/mikanos/kernel
 
 # freestanding: OS が無い環境で動くプログラム向け
-clang++ -O2 -Wall -g --target=x86_64-elf -ffreestanding -mno-red-zone -fno-exceptions -fno-rtti -std=c++17 -c main.cpp
+clang++ $CPPFLAGS -O2 -Wall -g --target=x86_64-elf -ffreestanding -mno-red-zone -fno-exceptions -fno-rtti -std=c++17 -c main.cpp
+# v2 コマンド
+clang++ $CPPFLAGS -O2 --target=x86_64-elf -fno-exceptions -ffreestanding -c main.cpp
 
-ld.lld --entry KernelMain -z norelro --image-base 0x100000 --static -o kernel.elf main.o
+ld.lld $LDFLAGS --entry KernelMain -z norelro --image-base 0x100000 --static -o kernel.elf main.o
 ```
 
 ## コラム 3.1 レッドゾーン
@@ -93,3 +97,4 @@ ld.lld --entry KernelMain -z norelro --image-base 0x100000 --static -o kernel.el
 
 > フレームバッファ（Frame Buffer）とはピクセル（に描画するための値）を敷き詰めたメモリ領域のことです。
 > フレームバッファの各点に値を書き込むと、それがディスプレイのピクセルに反映される仕組みになっています。
+
