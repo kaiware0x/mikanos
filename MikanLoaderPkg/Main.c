@@ -1,4 +1,5 @@
 #include <Guid/FileInfo.h>
+#include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
@@ -138,14 +139,14 @@ EFI_STATUS SaveMemoryMap(struct MemoryMap *map, EFI_FILE_PROTOCOL *file)
 }
 
 /**
- * @brief Graphics Output Protocol
+ * @brief Open "Graphics Output Protocol"
  */
 EFI_STATUS OpenGOP(EFI_HANDLE image_handle,
                    EFI_GRAPHICS_OUTPUT_PROTOCOL **gop)
 {
     UINTN num_gop_handles = 0;
     EFI_HANDLE *gop_handles = NULL;
-    gBS->LocatedHandleBuffer(
+    gBS->LocateHandleBuffer(
         ByProtocol,
         &gEfiGraphicsOutputProtocolGuid,
         NULL,
@@ -162,6 +163,28 @@ EFI_STATUS OpenGOP(EFI_HANDLE image_handle,
     return EFI_SUCCESS;
 }
 
+const CHAR16 *GetPixelFormatUnicode(EFI_GRAPHICS_PIXEL_FORMAT fmt)
+{
+    switch (fmt)
+    {
+    case PixelRedGreenBlueReserved8BitPerColor:
+        return L"PixelRedGreenBlueReserved8BitPerColor";
+    case PixelBlueGreenRedReserved8BitPerColor:
+        return L"PixelBlueGreenRedReserved8BitPerColor";
+    case PixelBitMask:
+        return L"PixelBitMask";
+    case PixelBltOnly:
+        return L"PixelBltOnly";
+    case PixelFormatMax:
+        return L"PixelFormatMax";
+    default:
+        return L"InvalidPixelFormat";
+    }
+}
+
+/**
+ * @brief Boot Loader のエントリーポイント
+ */
 EFI_STATUS EFIAPI UefiMain(
     EFI_HANDLE image_handle,
     EFI_SYSTEM_TABLE *system_table)
@@ -173,6 +196,10 @@ EFI_STATUS EFIAPI UefiMain(
     // Root dir の Open
     EFI_FILE_PROTOCOL *root_dir;
     OpenRootDir(image_handle, &root_dir);
+
+    //----------------------------------------------------
+    // Memory map file の保存
+    //----------------------------------------------------
 
     // Memory map file の Open
     EFI_FILE_PROTOCOL *memmap_file;
@@ -186,9 +213,33 @@ EFI_STATUS EFIAPI UefiMain(
     // Memory map file の Close
     memmap_file->Close(memmap_file);
 
-    //-----------------------------------
+    //----------------------------------------------------
+    // Graphics Output Protocol によるピクセル描画
+    //----------------------------------------------------
+
+    // gop ハンドルの取得
+    EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
+    OpenGOP(image_handle, &gop);
+    // 各種情報のPrint
+    Print(L"Resolution: %ux%u, Pixel Format: %s, %u pixels/line\n",
+          gop->Mode->Info->HorizontalResolution,
+          gop->Mode->Info->VerticalResolution,
+          GetPixelFormatUnicode(gop->Mode->Info->PixelFormat),
+          gop->Mode->Info->PixelsPerScanLine);
+    Print(L"Frame Buffer: 0x%0lx - 0x%0lx, Size: %lu bytes\n",
+          gop->Mode->FrameBufferBase,
+          gop->Mode->FrameBufferBase + gop->Mode->FrameBufferSize,
+          gop->Mode->FrameBufferSize);
+    // 画面塗りつぶし
+    UINT8 *frame_buffer = (UINT8 *)gop->Mode->FrameBufferBase;
+    for (UINTN i = 0; i < gop->Mode->FrameBufferSize; ++i)
+    {
+        frame_buffer[i] = 255; // 白
+    }
+
+    //----------------------------------------------------
     // kernel を読み込む
-    //-----------------------------------
+    //----------------------------------------------------
 
     // kernel_file の取得
     EFI_FILE_PROTOCOL *kernel_file;
@@ -217,9 +268,10 @@ EFI_STATUS EFIAPI UefiMain(
     kernel_file->Read(kernel_file, &kernel_file_size, (VOID *)kernel_base_addr);
     Print(L"Kernel: 0x%0lx (%lu bytes)\n", kernel_base_addr, kernel_file_size);
 
-    //-----------------------------------
+    //----------------------------------------------------
     // Boot Service を停止させる
-    //-----------------------------------
+    //----------------------------------------------------
+
     EFI_STATUS status;
     status = gBS->ExitBootServices(image_handle, memmap.map_key);
     if (EFI_ERROR(status))
@@ -241,9 +293,10 @@ EFI_STATUS EFIAPI UefiMain(
         }
     }
 
-    //-----------------------------------
+    //----------------------------------------------------
     // Kernel を起動する
-    //-----------------------------------
+    //----------------------------------------------------
+
     UINT64 entry_addr = *(UINT64 *)(kernel_base_addr + 24);
     typedef void EntryPointType(void);
     EntryPointType *entry_point = (EntryPointType *)entry_addr;

@@ -30,9 +30,21 @@
 
 ```sh
 cd ~/edk2
+# シンボリックリンクを張っておく
+ln -s $HOME/workspace/mikanos/MikanLoaderPkg ./
 source edksetup.sh
 build
 ```
+
+ビルド前に `Conf/target.txt` を以下のように編集しておく。
+
+| 設定項目        | 設定値                            |
+| --------------- | --------------------------------- |
+| ACTIVE_PLATFORM | MikanLoaderPkg/MikanLoaderPkg.dsc |
+| TARGET          | DEBUG                             |
+| TARGET_ARCH     | X64                               |
+| TOOL_CHAIN_TAG  | CLANG38                           |
+
 
 ## QEMU で EFI アプリケーションを実行
 
@@ -79,3 +91,5 @@ ld.lld --entry KernelMain -z norelro --image-base 0x100000 --static -o kernel.el
 
 ## 3.4
 
+> フレームバッファ（Frame Buffer）とはピクセル（に描画するための値）を敷き詰めたメモリ領域のことです。
+> フレームバッファの各点に値を書き込むと、それがディスプレイのピクセルに反映される仕組みになっています。
