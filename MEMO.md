@@ -76,6 +76,9 @@ source $HOME/osbook/devenv/buildenv.sh
 
 cd ~/workspace/mikanos/kernel
 
+# 今はこれだけでOK
+make
+
 # freestanding: OS が無い環境で動くプログラム向け
 clang++ $CPPFLAGS -O2 -Wall -g --target=x86_64-elf -ffreestanding -mno-red-zone -fno-exceptions -fno-rtti -std=c++17 -c main.cpp
 # v2 コマンド
@@ -115,3 +118,13 @@ ld.lld $LDFLAGS --entry KernelMain -z norelro --image-base 0x100000 --static -o 
 | :----------------- | :--------------- | :------------ |
 | %.o                | foo.o            | foo           |
 | a.%.b              | dir/a.foo.b      | dir/foo       |
+
+## 4.5
+
+3つめのLOAD セグメントだけ、ファイルとメモリのサイズが違うのはなぜでしょうか？
+それは3つめのLOADセグメントが.bssセクションを含んでいるからです。.bssセクションとは、通常、
+初期値なしのグローバル変数が配置されるセクションです。例えばmain.cpp で定義したグローバル
+変数pixel_writer_buf やpixel_writer は初期値がありませんから、.bss セクションに配置さ
+れることになります。初期値がないということは、初期値をファイルに記録しておく必要がないという
+ことです。そのため、ファイル上での大きさは0 で、メモリ上では大きさを持つ変数となります。これ
+が、LOAD セグメントのファイルサイズよりメモリサイズが大きくなる理由です。
