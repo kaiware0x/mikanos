@@ -1,12 +1,16 @@
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 
+#include "console.hpp"
 #include "font.hpp"
 #include "frame_buffer_config.hpp"
 #include "graphics.hpp"
 
-extern "C" void __cxa_pure_virtual() {
-  while (1) __asm__("hlt");
+extern "C" void __cxa_pure_virtual()
+{
+    while (1)
+        __asm__("hlt");
 }
 
 void *operator new(std::size_t size, void *buf)
@@ -34,24 +38,24 @@ extern "C" void KernelMain(const FrameBufferConfig &frame_buffer_config)
         break;
     }
 
+    const PixelColor fg_color = {255, 255, 255};
+    const PixelColor bg_color = {0, 0, 0};
+
     for (int x = 0; x < frame_buffer_config.horizontal_resolution; ++x)
     {
         for (int y = 0; y < frame_buffer_config.vertical_resolution; ++y)
         {
-            pixel_writer->Write(x, y, {255, 255, 255});
+            pixel_writer->Write(x, y, bg_color);
         }
     }
 
-    for (int x = 0; x < 200; ++x)
+    Console console(*pixel_writer, fg_color, bg_color);
+    char buf[128] = {};
+    for (int i = 0; i < 20; ++i)
     {
-        for (int y = 0; y < 100; ++y)
-        {
-            pixel_writer->Write(100 + x, 100 + y, {0, 255, 0});
-        }
+        sprintf(buf, "line %d\n", i);
+        console.PutString(buf);
     }
-
-    WriteAscii(*pixel_writer, 50, 50, 'A', {0, 0, 0});
-    WriteAscii(*pixel_writer, 66, 50, 'A', {0, 0, 0});
 
     while (1)
         __asm__("hlt");

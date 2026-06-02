@@ -128,3 +128,14 @@ ld.lld $LDFLAGS --entry KernelMain -z norelro --image-base 0x100000 --static -o 
 れることになります。初期値がないということは、初期値をファイルに記録しておく必要がないという
 ことです。そのため、ファイル上での大きさは0 で、メモリ上では大きさを持つ変数となります。これ
 が、LOAD セグメントのファイルサイズよりメモリサイズが大きくなる理由です。
+
+
+## 5.3 フォントを増やそう
+
+```sh
+cd ~/workspace/mikanos/kernel
+# Text to Raw-Binary
+python3 ../tools/makefont.py -o hankaku.bin hankaku.txt
+# Raw-Binary to Linkable-Onject
+objcopy -I binary -O elf64-x86-64 -B i386:x86-64 hankaku.bin hankaku.o
+```
