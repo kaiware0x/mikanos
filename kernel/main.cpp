@@ -21,8 +21,27 @@ void operator delete(void *obj) noexcept
 {
 }
 
+// pixel writer
 char pixel_writer_buf[sizeof(RGBResv8BitPerColorPixelWriter)];
 PixelWriter *pixel_writer = nullptr;
+
+// console
+char console_buf[sizeof(Console)];
+Console *console = nullptr;
+
+int printk(const char *format, ...)
+{
+    va_list ap;
+    int result;
+    char str[1024];
+
+    va_start(ap, format);
+    result = vsprintf(str, format, ap);
+    va_end(ap);
+
+    console->PutString(str);
+    return result;
+}
 
 extern "C" void KernelMain(const FrameBufferConfig &frame_buffer_config)
 {
@@ -41,6 +60,8 @@ extern "C" void KernelMain(const FrameBufferConfig &frame_buffer_config)
     const PixelColor fg_color = {255, 255, 255};
     const PixelColor bg_color = {0, 0, 0};
 
+    console = new (console_buf) Console(*pixel_writer, fg_color, bg_color);
+
     for (int x = 0; x < frame_buffer_config.horizontal_resolution; ++x)
     {
         for (int y = 0; y < frame_buffer_config.vertical_resolution; ++y)
@@ -49,12 +70,9 @@ extern "C" void KernelMain(const FrameBufferConfig &frame_buffer_config)
         }
     }
 
-    Console console(*pixel_writer, fg_color, bg_color);
-    char buf[128] = {};
-    for (int i = 0; i < 20; ++i)
+    for (int i = 0; i < 30; ++i)
     {
-        sprintf(buf, "line %d\n", i);
-        console.PutString(buf);
+        printk("printk: %d\n", i);
     }
 
     while (1)

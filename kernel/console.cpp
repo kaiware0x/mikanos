@@ -21,8 +21,8 @@ void Console::PutString(const char *s)
             m_buffer[m_cursor_row][m_cursor_column] = *s;
             ++m_cursor_column;
         }
+        ++s;
     }
-    ++s;
 }
 
 void Console::NewLine()
